@@ -79,8 +79,14 @@ mpi_type_id(const std::pair<float, int>)
     return MPI_FLOAT_INT;
 }
 
+inline constexpr static MPI_Datatype
+mpi_type_id(const char)
+{
+    return MPI_CHAR;
+}
+
 template <typename T>
-inline MPI_Datatype
+inline constexpr static MPI_Datatype
 mpi_type_id(const T&)
 {
     static_assert(!std::is_same<T, T>::value,
@@ -98,8 +104,8 @@ mpi_type_id(const T&)
  *
  * Note that this class is a utility class to group function calls in one
  * name space (all calls are to static functions).  Thus, you should never
- * attempt to instantiate a class of type MPI; simply call the functions
- * as static functions using the MPI::function(...) syntax.
+ * attempt to instantiate a class of type IBTK_MPI; simply call the functions
+ * as static functions using the IBTK_MPI::function(...) syntax.
  */
 
 struct IBTK_MPI
@@ -190,29 +196,20 @@ struct IBTK_MPI
     static void
     allToOneSumReduction(int* x, const int n, const int root = 0, IBTK_MPI::comm communicator = MPI_COMM_NULL);
 
-    /**
-     * Broadcast integer from specified root process to all other processes.
-     * All processes other than root, receive a copy of the integer value.
-     */
-    static int bcast(const int x, const int root, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-
+    //@{
     /**
      * Broadcast integer array from specified root processor to all other
      * processors.  For the root processor, "array" and "length"
      * are treated as const.
      */
-    static void bcast(int* x, int& length, const int root, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-
-    /**
-     * Broadcast char array from specified root processor to all other
-     * processors.  For the root processor, "array" and "length"
-     * are treated as const.
-     */
-    static void bcast(char* x, int& length, const int root, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    template <typename T>
+    static T bcast(const T x, const int root, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    template <typename T>
+    static void bcast(T* x, int& length, const int root, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    //@}
 
     /*!
-     * @brief This function sends an MPI message with an integer
-     * array to another processer.
+     * @brief This function sends an MPI message with an array to another processer.
      *
      * If the receiving processor knows in advance the length
      * of the array, use "send_length = false;"  otherwise,
@@ -220,7 +217,7 @@ struct IBTK_MPI
      * then send the data.  This call must be paired  with a
      * matching call to IBTK_MPI::recv.
      *
-     * @param buf Pointer to integer array buffer with length integers.
+     * @param buf Pointer to a valid type array buffer with length integers.
      * @param length Number of integers in buf that we want to send.
      * @param receiving_proc_number Receiving processor number.
      * @param send_length Optional boolean argument specifiying if
@@ -229,12 +226,12 @@ struct IBTK_MPI
      * @param tag Optional integer argument specifying an integer tag
      * to be sent with this message.  Default tag is 0.
      */
-
-    static void send(const int* buf,
+    template <typename T>
+    static void send(const T* buf,
                      const int length,
                      const int receiving_proc_number,
                      const bool send_length = true,
-                     int tag = -1,
+                     int tag = 0,
                      IBTK_MPI::comm communicator = MPI_COMM_NULL);
 
     /*!
@@ -266,15 +263,14 @@ struct IBTK_MPI
     static int recvBytes(void* buf, int number_bytes, IBTK_MPI::comm communicator = MPI_COMM_NULL);
 
     /*!
-     * @brief This function receives an MPI message with an integer
-     * array from another processer.
+     * @brief This function receives an MPI message with an array from another processer.
      *
      * If this processor knows in advance the length of the array,
      * use "get_length = false;" otherwise, the sending processor
      * will first send the length of the array, then send the data.
      * This call must be paired with a matching call to IBTK_MPI::send.
      *
-     * @param buf Pointer to integer array buffer with capacity of
+     * @param buf Pointer to a valid type array buffer with capacity of
      * length integers.
      * @param length Maximum number of integers that can be stored in
      * buf.
@@ -286,18 +282,20 @@ struct IBTK_MPI
      * must be matched by the tag of the incoming message. Default
      * tag is 0.
      */
-    static void recv(int* buf,
+    template <typename T>
+    static void recv(T* buf,
                      int& length,
                      const int sending_proc_number,
                      const bool get_length = true,
                      int tag = -1,
                      IBTK_MPI::comm communicator = MPI_COMM_NULL);
+
     //@{
     /**
      * Each processor sends an array of integers or doubles to all other
      * processors; each processor's array may differ in length.
      * The x_out array must be pre-allocated to the correct length
-     * (this is a bit cumbersome, but is necessary to avoid th allGather
+     * (this is a bit cumbersome, but is necessary to avoid the allGather
      * function from allocating memory that is freed elsewhere).
      * To properly preallocate memory, before calling this method, call
      *
@@ -305,23 +303,11 @@ struct IBTK_MPI
      *
      * then allocate the x_out array.
      */
+    template <typename T>
     static void
-    allGather(const int* x_in, int size_in, int* x_out, int size_out, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    static void allGather(const double* x_in,
-                          int size_in,
-                          double* x_out,
-                          int size_out,
-                          IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    //@}
-
-    //@{
-    /**
-     * Each processor sends every other processor an integer or double.
-     * The x_out array should be preallocated to a length equal
-     * to the number of processors.
-     */
-    static void allGather(int x_in, int* x_out, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    static void allGather(double x_in, double* x_out, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    allGather(const T* x_in, int size_in, T* x_out, int size_out, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    template <typename T>
+    static void allGather(T x_in, T* x_out, IBTK_MPI::comm communicator = MPI_COMM_NULL);
 
     //@}
 

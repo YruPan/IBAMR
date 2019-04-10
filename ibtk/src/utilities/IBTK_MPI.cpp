@@ -206,45 +206,32 @@ IBTK_MPI::allToOneSumReduction(int* x, const int n, const int root, IBTK_MPI::co
     }
 } // allToOneSumReduction
 
-int
-IBTK_MPI::bcast(const int x, const int root, IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
+template <typename T>
+T
+IBTK_MPI::bcast(const T x, const int root, IBTK_MPI::comm communicator)
 {
-    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    int recv = x;
-    if (getNodes(communicator) > 1)
-    {
-        (void)MPI_Bcast(&recv, 1, MPI_INT, root, communicator);
-    }
-    return (recv);
-} // bcast
+    bcast(&x, 1, root, communicator);
+}
 
+template <typename T>
 void
-IBTK_MPI::bcast(int* x, int& length, const int root, IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
+IBTK_MPI::bcast(T* x, int& length, const int root, IBTK_MPI::comm communicator)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
     if (getNodes(communicator) > 1)
     {
-        (void)MPI_Bcast((void*)x, length, MPI_INT, root, communicator);
+        MPI_Bcast(x, length, mpi_type_id(x[0]), root, communicator);
     }
 } // bcast
 
+template <typename T>
 void
-IBTK_MPI::bcast(char* x, int& length, const int root, IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
-{
-    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    if (getNodes(communicator) > 1)
-    {
-        (void)MPI_Bcast((void*)x, length, MPI_BYTE, root, communicator);
-    }
-} // bcast
-
-void
-IBTK_MPI::send(const int* buf,
+IBTK_MPI::send(const T* buf,
                const int length,
                const int receiving_proc_number,
                const bool send_length,
                int tag,
-               IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
+               IBTK_MPI::comm communicator)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
     tag = (tag >= 0) ? tag : 0;
@@ -253,16 +240,17 @@ IBTK_MPI::send(const int* buf,
     {
         MPI_Send(&size, 1, MPI_INT, receiving_proc_number, tag, communicator);
     }
-    MPI_Send((void*)buf, length, MPI_INT, receiving_proc_number, tag, communicator);
+    MPI_Send(buf, length, mpi_type_id(buf[0]), receiving_proc_number, tag, communicator);
 } // send
 
+template <typename T>
 void
-IBTK_MPI::recv(int* buf,
+IBTK_MPI::recv(T* buf,
                int& length,
                const int sending_proc_number,
                const bool get_length,
                int tag,
-               IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
+               IBTK_MPI::comm communicator)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
     MPI_Status status;
@@ -271,7 +259,7 @@ IBTK_MPI::recv(int* buf,
     {
         MPI_Recv(&length, 1, MPI_INT, sending_proc_number, tag, communicator, &status);
     }
-    MPI_Recv((void*)buf, length, MPI_INT, sending_proc_number, tag, communicator, &status);
+    MPI_Recv(buf, length, mpi_type_id(buf[0]), sending_proc_number, tag, communicator, &status);
 } // recv
 
 void
@@ -296,46 +284,24 @@ IBTK_MPI::recvBytes(void* buf, int number_bytes, IBTK_MPI::comm communicator /* 
     return rval;
 } // recvBytes
 
+template <typename T>
 void
-IBTK_MPI::allGather(const int* x_in,
-                    int size_in,
-                    int* x_out,
-                    int size_out,
-                    IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
+IBTK_MPI::allGather(const T* x_in, int size_in, T* x_out, int size_out, IBTK_MPI::comm communicator)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
     std::vector<int> rcounts, disps;
     allGatherSetup(size_in, size_out, rcounts, disps, communicator);
 
-    MPI_Allgatherv(x_in, size_in, MPI_INT, x_out, rcounts.data(), disps.data(), MPI_INT, communicator);
+    MPI_Allgatherv(
+        x_in, size_in, mpi_type_id(x_in[0]), x_out, rcounts.data(), disps.data(), mpi_type_id(x_in[0]), communicator);
 } // allGather
 
+template <typename T>
 void
-IBTK_MPI::allGather(const double* x_in,
-                    int size_in,
-                    double* x_out,
-                    int size_out,
-                    IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
+IBTK_MPI::allGather(T x_in, T* x_out, IBTK_MPI::comm communicator)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    std::vector<int> rcounts, disps;
-    allGatherSetup(size_in, size_out, rcounts, disps, communicator);
-
-    MPI_Allgatherv((void*)x_in, size_in, MPI_DOUBLE, x_out, rcounts.data(), disps.data(), MPI_DOUBLE, communicator);
-} // allGather
-
-void
-IBTK_MPI::allGather(double x_in, double* x_out, IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
-{
-    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    MPI_Allgather(&x_in, 1, MPI_DOUBLE, x_out, 1, MPI_DOUBLE, communicator);
-} // allGather
-
-void
-IBTK_MPI::allGather(int x_in, int* x_out, IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
-{
-    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    MPI_Allgather(&x_in, 1, MPI_INT, x_out, 1, MPI_INT, communicator);
+    MPI_Allgather(&x_in, 1, mpi_type_id(x_in), x_out, 1, mpi_type_id(x_in), communicator);
 } // allGather
 //////////////////////////////////////  PRIVATE  ///////////////////////////////////////////////////
 
