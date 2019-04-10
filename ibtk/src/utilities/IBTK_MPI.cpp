@@ -93,122 +93,106 @@ IBTK_MPI::barrier(IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
     (void)MPI_Barrier(communicator);
 } // barrier
 
-void
-IBTK_MPI::minReduction(double* x, const int n, int* rank_of_min, IBTK_MPI::comm communicator)
+template <typename T>
+T
+IBTK_MPI::minReduction(T x, int* rank_of_min, IBTK_MPI::comm communicator)
 {
-    minReduction<double>(x, n, rank_of_min, communicator);
-}
-
-void
-IBTK_MPI::minReduction(int* x, const int n, int* rank_of_min, IBTK_MPI::comm communicator)
-{
-    minReduction<int>(x, n, rank_of_min, communicator);
-}
-
-void
-IBTK_MPI::minReduction(float* x, const int n, int* rank_of_min, IBTK_MPI::comm communicator)
-{
-    minReduction<float>(x, n, rank_of_min, communicator);
-}
-
-double
-IBTK_MPI::minReduction(double x, int* rank_of_min, IBTK_MPI::comm communicator)
-{
-    minReduction<double>(&x, 1, rank_of_min, communicator);
+    minReduction(&x, 1, rank_of_min, communicator);
     return x;
-}
+} // minReduction
 
-int
-IBTK_MPI::minReduction(int x, int* rank_of_min, IBTK_MPI::comm communicator)
-{
-    minReduction<int>(&x, 1, rank_of_min, communicator);
-    return x;
-}
-
-float
-IBTK_MPI::minReduction(float x, int* rank_of_min, IBTK_MPI::comm communicator)
-{
-    minReduction<float>(&x, 1, rank_of_min, communicator);
-    return x;
-}
-
+template <typename T>
 void
-IBTK_MPI::maxReduction(double* x, const int n, int* rank_of_max, IBTK_MPI::comm communicator)
+IBTK_MPI::minReduction(T* x, const int n, int* rank_of_min, IBTK_MPI::comm communicator)
 {
-    maxReduction<double>(x, n, rank_of_max, communicator);
-}
+    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
+    if (n == 0) return;
+    if (rank_of_min == nullptr)
+    {
+        std::vector<T> send(n);
+        std::copy(x, x + n, send.begin());
+        MPI_Allreduce(send.data(), x, n, mpi_type_id(send[0]), MPI_MIN, communicator);
+    }
+    else
+    {
+        // TODO: both this approach and SAMRAI's assume that we can define
+        // byte-for-byte compatible types with, e.g.,
+        // MPI_FLOAT_INT. Check this with a unit test!
+        std::vector<std::pair<T, int> > recv(n);
+        std::vector<std::pair<T, int> > send(n);
+        for (int i = 0; i < n; ++i)
+        {
+            send[i].first = x[i];
+            send[i].second = getRank(communicator);
+        }
+        MPI_Allreduce(send.data(), recv.data(), n, mpi_type_id(recv[0]), MPI_MINLOC, communicator);
+        for (int i = 0; i < n; ++i)
+        {
+            x[i] = recv[i].first;
+            rank_of_min[i] = send[i].second;
+        }
+    }
+} // minReduction
 
+template <typename T>
+T
+IBTK_MPI::maxReduction(T x, int* rank_of_max, IBTK_MPI::comm communicator)
+{
+    maxReduction(&x, 1, rank_of_max, communicator);
+    return x;
+} // maxReduction
+
+template <typename T>
 void
-IBTK_MPI::maxReduction(int* x, const int n, int* rank_of_max, IBTK_MPI::comm communicator)
+IBTK_MPI::maxReduction(T* x, const int n, int* rank_of_max, IBTK_MPI::comm communicator)
 {
-    maxReduction<int>(x, n, rank_of_max, communicator);
-}
+    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
+    if (n == 0) return;
+    if (rank_of_max == nullptr)
+    {
+        std::vector<T> send(n);
+        std::copy(x, x + n, send.begin());
+        MPI_Allreduce(send.data(), x, n, mpi_type_id(send[0]), MPI_MAX, communicator);
+    }
+    else
+    {
+        // TODO: both this approach and SAMRAI's assume that we can define
+        // byte-for-byte compatible types with, e.g.,
+        // MPI_FLOAT_INT. Check this with a unit test!
+        std::vector<std::pair<T, int> > recv(n);
+        std::vector<std::pair<T, int> > send(n);
+        for (int i = 0; i < n; ++i)
+        {
+            send[i].first = x[i];
+            send[i].second = getRank(communicator);
+        }
+        MPI_Allreduce(send.data(), recv.data(), n, mpi_type_id(recv[0]), MPI_MAXLOC, communicator);
+        for (int i = 0; i < n; ++i)
+        {
+            x[i] = recv[i].first;
+            rank_of_max[i] = send[i].second;
+        }
+    }
+} // maxReduction
 
+template <typename T>
+T
+IBTK_MPI::sumReduction(T x, IBTK_MPI::comm communicator)
+{
+    sumReduction(&x, 1, communicator);
+    return x;
+} // sumReduction
+
+template <typename T>
 void
-IBTK_MPI::maxReduction(float* x, const int n, int* rank_of_max, IBTK_MPI::comm communicator)
+IBTK_MPI::sumReduction(T* x, const int n, IBTK_MPI::comm communicator)
 {
-    maxReduction<float>(x, n, rank_of_max, communicator);
-}
-
-double
-IBTK_MPI::maxReduction(double x, int* rank_of_max, IBTK_MPI::comm communicator)
-{
-    maxReduction<double>(&x, 1, rank_of_max, communicator);
-    return x;
-}
-
-int
-IBTK_MPI::maxReduction(int x, int* rank_of_max, IBTK_MPI::comm communicator)
-{
-    maxReduction<int>(&x, 1, rank_of_max, communicator);
-    return x;
-}
-
-float
-IBTK_MPI::maxReduction(float x, int* rank_of_max, IBTK_MPI::comm communicator)
-{
-    maxReduction<float>(&x, 1, rank_of_max, communicator);
-    return x;
-}
-
-void
-IBTK_MPI::sumReduction(double* x, const int n, IBTK_MPI::comm communicator)
-{
-    sumReduction<double>(x, n, communicator);
-}
-
-void
-IBTK_MPI::sumReduction(int* x, const int n, IBTK_MPI::comm communicator)
-{
-    sumReduction<int>(x, n, communicator);
-}
-
-void
-IBTK_MPI::sumReduction(float* x, const int n, IBTK_MPI::comm communicator)
-{
-    sumReduction<float>(x, n, communicator);
-}
-
-double
-IBTK_MPI::sumReduction(double x, IBTK_MPI::comm communicator)
-{
-    sumReduction<double>(&x, 1, communicator);
-    return x;
-}
-
-int
-IBTK_MPI::sumReduction(int x, IBTK_MPI::comm communicator)
-{
-    sumReduction<int>(&x, 1, communicator);
-    return x;
-}
-
-float
-IBTK_MPI::sumReduction(float x, IBTK_MPI::comm communicator)
-{
-    sumReduction<float>(&x, 1, communicator);
-    return x;
-}
+    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
+    if (n == 0 || getNodes(communicator) < 2) return;
+    std::vector<T> send(n);
+    std::copy(x, x + n, send.begin());
+    MPI_Allreduce(send.data(), x, n, mpi_type_id(send[0]), MPI_SUM, communicator);
+} // sumReduction
 
 void
 IBTK_MPI::allToOneSumReduction(int* x, const int n, const int root, IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
@@ -375,83 +359,6 @@ IBTK_MPI::allGather(int x_in, int* x_out, IBTK_MPI::comm communicator /* = MPI_C
     MPI_Allgather(&x_in, 1, MPI_INT, x_out, 1, MPI_INT, communicator);
 } // allGather
 //////////////////////////////////////  PRIVATE  ///////////////////////////////////////////////////
-
-template <typename T>
-void
-IBTK_MPI::minReduction(T* x, const int n, int* rank_of_min, IBTK_MPI::comm communicator)
-{
-    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    if (n == 0) return;
-    if (rank_of_min == nullptr)
-    {
-        std::vector<T> send(n);
-        std::copy(x, x + n, send.begin());
-        MPI_Allreduce(send.data(), x, n, mpi_type_id(send[0]), MPI_MIN, communicator);
-    }
-    else
-    {
-        // TODO: both this approach and SAMRAI's assume that we can define
-        // byte-for-byte compatible types with, e.g.,
-        // MPI_FLOAT_INT. Check this with a unit test!
-        std::vector<std::pair<T, int> > recv(n);
-        std::vector<std::pair<T, int> > send(n);
-        for (int i = 0; i < n; ++i)
-        {
-            send[i].first = x[i];
-            send[i].second = getRank(communicator);
-        }
-        MPI_Allreduce(send.data(), recv.data(), n, mpi_type_id(recv[0]), MPI_MINLOC, communicator);
-        for (int i = 0; i < n; ++i)
-        {
-            x[i] = recv[i].first;
-            rank_of_min[i] = send[i].second;
-        }
-    }
-} // minReduction
-
-template <typename T>
-void
-IBTK_MPI::maxReduction(T* x, const int n, int* rank_of_max, IBTK_MPI::comm communicator)
-{
-    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    if (n == 0) return;
-    if (rank_of_max == nullptr)
-    {
-        std::vector<T> send(n);
-        std::copy(x, x + n, send.begin());
-        MPI_Allreduce(send.data(), x, n, mpi_type_id(send[0]), MPI_MAX, communicator);
-    }
-    else
-    {
-        // TODO: both this approach and SAMRAI's assume that we can define
-        // byte-for-byte compatible types with, e.g.,
-        // MPI_FLOAT_INT. Check this with a unit test!
-        std::vector<std::pair<T, int> > recv(n);
-        std::vector<std::pair<T, int> > send(n);
-        for (int i = 0; i < n; ++i)
-        {
-            send[i].first = x[i];
-            send[i].second = getRank(communicator);
-        }
-        MPI_Allreduce(send.data(), recv.data(), n, mpi_type_id(recv[0]), MPI_MAXLOC, communicator);
-        for (int i = 0; i < n; ++i)
-        {
-            x[i] = recv[i].first;
-            rank_of_max[i] = send[i].second;
-        }
-    }
-} // maxReduction
-
-template <typename T>
-void
-IBTK_MPI::sumReduction(T* x, const int n, IBTK_MPI::comm communicator)
-{
-    communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    if (n == 0 || getNodes(communicator) < 2) return;
-    std::vector<T> send(n);
-    std::copy(x, x + n, send.begin());
-    MPI_Allreduce(send.data(), x, n, mpi_type_id(send[0]), MPI_SUM, communicator);
-} // sumReduction
 
 void
 IBTK_MPI::allGatherSetup(int size_in,
