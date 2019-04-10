@@ -79,29 +79,13 @@ mpi_type_id(const std::pair<float, int>)
     return MPI_FLOAT_INT;
 }
 
-inline constexpr static MPI_Datatype
-mpi_type_id(const std::size_t)
-{
-#if SIZE_MAX == UCHAR_MAX
-    return MPI_UNSIGNED_CHAR;
-#elif SIZE_MAX == USHRT_MAX
-    return MPI_UNSIGNED_SHORT;
-#elif SIZE_MAX == UINT_MAX
-    return MPI_UNSIGNED;
-#elif SIZE_MAX == ULONG_MAX
-    return MPI_UNSIGNED_LONG;
-#elif SIZE_MAX == ULLONG_MAX
-    return MPI_UNSIGNED_LONG_LONG;
-#endif
-}
-
 template <typename T>
 inline MPI_Datatype
 mpi_type_id(const T&)
 {
     static_assert(!std::is_same<T, T>::value,
                   "The given type does not have a corresponding MPI_Datatype value. At this time only char, int, "
-                  "unsigned int, std::size_t, float, double, std::pair<int, int>, std::pair<int, double>, and "
+                  "unsigned int, float, double, std::pair<int, int>, std::pair<int, double>, and "
                   "std::pair<int, float> are supported by IBTK_MPI.");
     return -1;
 }
@@ -163,7 +147,7 @@ struct IBTK_MPI
 
     //@{
     /**
-     * Perform a min reduction on a data structure of type double, int, float, or std::size_t. Each processor
+     * Perform a min reduction on a data structure of type double, int, or float. Each processor
      * contributes an array of values and element-wise min is returned in the same array. If the rank_of_min is not
      * null, the rank of which processor the min is located is stored in the array.
      */
@@ -177,7 +161,7 @@ struct IBTK_MPI
 
     //@{
     /**
-     * Perform a max reduction on a data structure of type double, int, float, or std::size_t. Each processor
+     * Perform a max reduction on a data structure of type double, int, or float. Each processor
      * contributes an array of values and element-wise max is returned in the same array. If the rank_of_max is not
      * null, the rank of which processor the max is located is stored in the array.
      */
@@ -190,7 +174,7 @@ struct IBTK_MPI
 
     //@{
     /**
-     * Perform a sum reduction on a data structure of type double, int, float, or std::size_t. Each processor
+     * Perform a sum reduction on a data structure of type double, int, or float. Each processor
      * contributes an array of values and element-wise sum is returned in the same array.
      */
     template <typename T>
@@ -343,22 +327,13 @@ struct IBTK_MPI
 
 private:
     /**
-     * Private functions for MPI calls.
-     */
-    template <typename T>
-    static void
-    minReduction(T* x, const int n = 1, int* rank_of_min = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    template <typename T>
-    static void
-    maxReduction(T* x, const int n = 1, int* rank_of_max = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    template <typename T>
-    static void sumReduction(T* x, const int n = 1, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-
-    /**
      * Performs common functions needed by some of the allToAll methods.
      */
-    static void
-    allGatherSetup(int size_in, int size_out, int*& rcounts, int*& disps, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    static void allGatherSetup(int size_in,
+                               int size_out,
+                               std::vector<int>& rcounts,
+                               std::vector<int>& disps,
+                               IBTK_MPI::comm communicator = MPI_COMM_NULL);
 
     static IBTK_MPI::comm d_communicator;
 };

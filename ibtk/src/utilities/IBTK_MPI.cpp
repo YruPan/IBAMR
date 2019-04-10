@@ -200,10 +200,9 @@ IBTK_MPI::allToOneSumReduction(int* x, const int n, const int root, IBTK_MPI::co
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
     if (getNodes(communicator) > 1)
     {
-        auto send = new int[n];
-        memcpy(send, x, n * sizeof(int));
-        MPI_Reduce(send, x, n, MPI_INT, MPI_SUM, root, communicator);
-        delete[] send;
+        std::vector<int> send(n);
+        std::copy(x, x + n, send.begin());
+        MPI_Reduce(send.data(), x, n, MPI_INT, MPI_SUM, root, communicator);
     }
 } // allToOneSumReduction
 
@@ -305,20 +304,10 @@ IBTK_MPI::allGather(const int* x_in,
                     IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    int* rcounts = nullptr;
-    int* disps = nullptr;
+    std::vector<int> rcounts, disps;
     allGatherSetup(size_in, size_out, rcounts, disps, communicator);
 
-    MPI_Allgatherv((void*)x_in, size_in, MPI_INT, x_out, rcounts, disps, MPI_INT, communicator);
-
-    if (rcounts)
-    {
-        delete[] rcounts;
-    }
-    if (disps)
-    {
-        delete[] disps;
-    }
+    MPI_Allgatherv(x_in, size_in, MPI_INT, x_out, rcounts.data(), disps.data(), MPI_INT, communicator);
 } // allGather
 
 void
@@ -329,20 +318,10 @@ IBTK_MPI::allGather(const double* x_in,
                     IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    int* rcounts = nullptr;
-    int* disps = nullptr;
+    std::vector<int> rcounts, disps;
     allGatherSetup(size_in, size_out, rcounts, disps, communicator);
 
-    MPI_Allgatherv((void*)x_in, size_in, MPI_DOUBLE, x_out, rcounts, disps, MPI_DOUBLE, communicator);
-
-    if (rcounts)
-    {
-        delete[] rcounts;
-    }
-    if (disps)
-    {
-        delete[] disps;
-    }
+    MPI_Allgatherv((void*)x_in, size_in, MPI_DOUBLE, x_out, rcounts.data(), disps.data(), MPI_DOUBLE, communicator);
 } // allGather
 
 void
@@ -363,17 +342,17 @@ IBTK_MPI::allGather(int x_in, int* x_out, IBTK_MPI::comm communicator /* = MPI_C
 void
 IBTK_MPI::allGatherSetup(int size_in,
                          int size_out,
-                         int*& rcounts,
-                         int*& disps,
+                         std::vector<int>& rcounts,
+                         std::vector<int>& disps,
                          IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
     int np = getNodes(communicator);
-    rcounts = new int[np];
-    disps = new int[np];
+    rcounts.resize(np);
+    disps.resize(np);
 
     /* figure out where where each processor's input will be placed */
-    allGather(size_in, rcounts, communicator);
+    allGather(size_in, rcounts.data(), communicator);
 
     disps[0] = 0;
     for (int p = 1; p < np; ++p)
