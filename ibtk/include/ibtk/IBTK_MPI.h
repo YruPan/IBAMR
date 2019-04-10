@@ -60,10 +60,10 @@ struct IBTK_MPI
     /**
      * MPI Types
      */
-    typedef MPI_Comm comm;
-    typedef MPI_Group group;
-    typedef MPI_Request request;
-    typedef MPI_Status status;
+    using comm = MPI_Comm;
+    using group = MPI_Group;
+    using request = MPI_Request;
+    using status = MPI_Status;
 
     /**
      * Set the communicator that is used for the MPI communication routines.
@@ -135,14 +135,14 @@ struct IBTK_MPI
      * processor the min is located is stored in the array.
      */
     static void
-    minReduction(double* x, const int n = 1, int* rank_of_min = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    minReduction(double* x, const int n = 1, int* rank_of_min = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
     static void
-    minReduction(int* x, const int n = 1, int* rank_of_min = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    minReduction(int* x, const int n = 1, int* rank_of_min = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
     static void
-    minReduction(float* x, const int n = 1, int* rank_of_min = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    static double minReduction(double x, int* rank_of_min = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    static int minReduction(int x, int* rank_of_min = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    static float minReduction(float x, int* rank_of_min = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    minReduction(float* x, const int n = 1, int* rank_of_min = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    static double minReduction(double x, int* rank_of_min = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    static int minReduction(int x, int* rank_of_min = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    static float minReduction(float x, int* rank_of_min = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
     //@}
 
     //@{
@@ -152,14 +152,14 @@ struct IBTK_MPI
      * processor the max is located is stored in the array.
      */
     static void
-    maxReduction(double* x, const int n = 1, int* rank_of_max = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    maxReduction(double* x, const int n = 1, int* rank_of_max = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
     static void
-    maxReduction(int* x, const int n = 1, int* rank_of_max = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    maxReduction(int* x, const int n = 1, int* rank_of_max = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
     static void
-    maxReduction(float* x, const int n = 1, int* rank_of_max = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    static double maxReduction(double x, int* rank_of_max = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    static int maxReduction(int x, int* rank_of_max = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
-    static float maxReduction(float x, int* rank_of_max = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    maxReduction(float* x, const int n = 1, int* rank_of_max = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    static double maxReduction(double x, int* rank_of_max = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    static int maxReduction(int x, int* rank_of_max = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    static float maxReduction(float x, int* rank_of_max = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
     //@}
 
     //@{
@@ -323,10 +323,10 @@ private:
      */
     template <typename T>
     static void
-    minReduction(T* x, const int n = 1, int* rank_of_min = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    minReduction(T* x, const int n = 1, int* rank_of_min = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
     template <typename T>
     static void
-    maxReduction(T* x, const int n = 1, int* rank_of_max = NULL, IBTK_MPI::comm communicator = MPI_COMM_NULL);
+    maxReduction(T* x, const int n = 1, int* rank_of_max = nullptr, IBTK_MPI::comm communicator = MPI_COMM_NULL);
     template <typename T>
     static void sumReduction(T* x, const int n = 1, IBTK_MPI::comm communicator = MPI_COMM_NULL);
 

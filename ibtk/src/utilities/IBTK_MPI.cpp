@@ -216,7 +216,7 @@ IBTK_MPI::allToOneSumReduction(int* x, const int n, const int root, IBTK_MPI::co
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
     if (getNodes(communicator) > 1)
     {
-        int* send = new int[n];
+        auto send = new int[n];
         memcpy(send, x, n * sizeof(int));
         MPI_Reduce(send, x, n, MPI_INT, MPI_SUM, root, communicator);
         delete[] send;
@@ -321,8 +321,8 @@ IBTK_MPI::allGather(const int* x_in,
                     IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    int* rcounts = (int*)NULL;
-    int* disps = (int*)NULL;
+    int* rcounts = nullptr;
+    int* disps = nullptr;
     allGatherSetup(size_in, size_out, rcounts, disps, communicator);
 
     MPI_Allgatherv((void*)x_in, size_in, MPI_INT, x_out, rcounts, disps, MPI_INT, communicator);
@@ -345,8 +345,8 @@ IBTK_MPI::allGather(const double* x_in,
                     IBTK_MPI::comm communicator /* = MPI_COMM_NULL */)
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
-    int* rcounts = (int*)NULL;
-    int* disps = (int*)NULL;
+    int* rcounts = nullptr;
+    int* disps = nullptr;
     allGatherSetup(size_in, size_out, rcounts, disps, communicator);
 
     MPI_Allgatherv((void*)x_in, size_in, MPI_DOUBLE, x_out, rcounts, disps, MPI_DOUBLE, communicator);
@@ -382,7 +382,7 @@ IBTK_MPI::minReduction(T* x, const int n, int* rank_of_min, IBTK_MPI::comm commu
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
     if (n == 0) return;
-    if (rank_of_min == NULL)
+    if (rank_of_min == nullptr)
     {
         std::vector<T> send(n);
         std::copy(x, x + n, send.begin());
@@ -415,7 +415,7 @@ IBTK_MPI::maxReduction(T* x, const int n, int* rank_of_max, IBTK_MPI::comm commu
 {
     communicator = communicator == MPI_COMM_NULL ? d_communicator : communicator;
     if (n == 0) return;
-    if (rank_of_max == NULL)
+    if (rank_of_max == nullptr)
     {
         std::vector<T> send(n);
         std::copy(x, x + n, send.begin());
