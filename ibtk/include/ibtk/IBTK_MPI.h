@@ -321,6 +321,9 @@ private:
                                std::vector<int>& disps,
                                IBTK_MPI::comm communicator = MPI_COMM_NULL);
 
+    template <typename T>
+    static void minMaxReduction(T* x, const int n, int* rank, MPI_Op op, IBTK_MPI::comm communicator);
+
     static IBTK_MPI::comm d_communicator;
 };
 

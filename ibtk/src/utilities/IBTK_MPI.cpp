@@ -115,22 +115,7 @@ IBTK_MPI::minReduction(T* x, const int n, int* rank_of_min, IBTK_MPI::comm commu
     }
     else
     {
-        // TODO: both this approach and SAMRAI's assume that we can define
-        // byte-for-byte compatible types with, e.g.,
-        // MPI_FLOAT_INT. Check this with a unit test!
-        std::vector<std::pair<T, int> > recv(n);
-        std::vector<std::pair<T, int> > send(n);
-        for (int i = 0; i < n; ++i)
-        {
-            send[i].first = x[i];
-            send[i].second = getRank(communicator);
-        }
-        MPI_Allreduce(send.data(), recv.data(), n, mpi_type_id(recv[0]), MPI_MINLOC, communicator);
-        for (int i = 0; i < n; ++i)
-        {
-            x[i] = recv[i].first;
-            rank_of_min[i] = send[i].second;
-        }
+        minMaxReduction(x, n, rank_of_min, MPI_MINLOC, communicator);
     }
 } // minReduction
 
@@ -156,22 +141,7 @@ IBTK_MPI::maxReduction(T* x, const int n, int* rank_of_max, IBTK_MPI::comm commu
     }
     else
     {
-        // TODO: both this approach and SAMRAI's assume that we can define
-        // byte-for-byte compatible types with, e.g.,
-        // MPI_FLOAT_INT. Check this with a unit test!
-        std::vector<std::pair<T, int> > recv(n);
-        std::vector<std::pair<T, int> > send(n);
-        for (int i = 0; i < n; ++i)
-        {
-            send[i].first = x[i];
-            send[i].second = getRank(communicator);
-        }
-        MPI_Allreduce(send.data(), recv.data(), n, mpi_type_id(recv[0]), MPI_MAXLOC, communicator);
-        for (int i = 0; i < n; ++i)
-        {
-            x[i] = recv[i].first;
-            rank_of_max[i] = send[i].second;
-        }
+        minMaxReduction(x, n, rank_of_max, MPI_MAXLOC, communicator);
     }
 } // maxReduction
 
@@ -340,4 +310,25 @@ IBTK_MPI::allGatherSetup(int size_in,
     }
 } // allGatherSetup
 
+template <typename T>
+void
+IBTK_MPI::minMaxReduction(T* x, const int n, int* rank, MPI_Op op, IBTK_MPI::comm communicator)
+{
+    // TODO: both this approach and SAMRAI's assume that we can define
+    // byte-for-byte compatible types with, e.g.,
+    // MPI_FLOAT_INT. Check this with a unit test!
+    std::vector<std::pair<T, int> > recv(n);
+    std::vector<std::pair<T, int> > send(n);
+    for (int i = 0; i < n; ++i)
+    {
+        send[i].first = x[i];
+        send[i].second = getRank(communicator);
+    }
+    MPI_Allreduce(send.data(), recv.data(), n, mpi_type_id(recv[0]), op, communicator);
+    for (int i = 0; i < n; ++i)
+    {
+        x[i] = recv[i].first;
+        rank[i] = send[i].second;
+    }
+} // minMaxReduction
 } // namespace IBTK
