@@ -43,6 +43,42 @@
 
 namespace IBTK
 {
+inline constexpr static MPI_Datatype
+mpi_type_id(const double)
+{
+    return MPI_DOUBLE;
+}
+
+inline constexpr static MPI_Datatype
+mpi_type_id(const std::pair<double, int>)
+{
+    return MPI_DOUBLE_INT;
+}
+
+inline constexpr static MPI_Datatype
+mpi_type_id(const int)
+{
+    return MPI_INT;
+}
+
+inline constexpr static MPI_Datatype
+mpi_type_id(const std::pair<int, int>)
+{
+    return MPI_2INT;
+}
+
+inline constexpr static MPI_Datatype
+mpi_type_id(const float)
+{
+    return MPI_FLOAT;
+}
+
+inline constexpr static MPI_Datatype
+mpi_type_id(const std::pair<float, int>)
+{
+    return MPI_FLOAT_INT;
+}
+
 /**
  * @brief Provides C++ wrapper around MPI routines.
  *
@@ -97,36 +133,6 @@ struct IBTK_MPI
      * Perform a global barrier across all processors.
      */
     static void barrier(IBTK_MPI::comm communicator = MPI_COMM_NULL);
-
-    inline static MPI_Datatype mpi_type_id(const double)
-    {
-        return MPI_DOUBLE;
-    }
-
-    inline static MPI_Datatype mpi_type_id(const std::pair<double, int>)
-    {
-        return MPI_DOUBLE_INT;
-    }
-
-    inline static MPI_Datatype mpi_type_id(const int)
-    {
-        return MPI_INT;
-    }
-
-    inline static MPI_Datatype mpi_type_id(const std::pair<int, int>)
-    {
-        return MPI_2INT;
-    }
-
-    inline static MPI_Datatype mpi_type_id(const float)
-    {
-        return MPI_FLOAT;
-    }
-
-    inline static MPI_Datatype mpi_type_id(const std::pair<float, int>)
-    {
-        return MPI_FLOAT_INT;
-    }
 
     //@{
     /**
